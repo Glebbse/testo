@@ -17,7 +17,3 @@ except requests.exceptions.RequestException as err:
     print(f"Response error {err}")
 except KeyError as er:
     print(f"Error key {er}")
-
-
-new = requests.get(url="https://2ip.ru").text
-print(new["ip"])

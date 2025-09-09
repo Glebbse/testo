@@ -12,7 +12,7 @@ try:
     response = requests.get(url=url)
     response.raise_for_status()
     ip = response.json()["ip"]
-    print(ip)
+    print(ip, response.json())
 except requests.exceptions.RequestException as err:
     print(f"Response error {err}")
 except KeyError as er:

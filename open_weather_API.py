@@ -1,4 +1,5 @@
-import requests, os, sys, argparse
+import requests
+import os, sys, argparse
 from dotenv import load_dotenv
 from datetime import datetime
 

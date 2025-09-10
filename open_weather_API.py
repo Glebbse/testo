@@ -1,27 +1,43 @@
-import json
-
-import requests, os
+import requests, os, sys, argparse
 import requests.cookies
 from dotenv import load_dotenv
+from datetime import datetime
 
 
 load_dotenv()
 api = os.getenv("api_key")
-city = input().capitalize()
-lat, lon = 0, 0
-url_geo = f"http://api.openweathermap.org/geo/1.0/direct?q={city}&limit=1&appid={api}"
-url_weather = f"https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&appid={api}"
-# &exclude={part}
+
+def create_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-c", "--city")
+    return parser
+
 try:
-    response = requests.get(url=url_geo)
-    response.raise_for_status()
-    lat, lon = response.json()[0]["lat"], response.json()[0]["lon"]
-    resp = requests.get(url=url_weather)
-    print("Enter the period please: current, daily or hourly\n")
-    period = input()
-    data = resp.json()[period]
-    print(json.dumps(data, indent=2))
+    if __name__ == "__main__":
+        parse = create_parser()
+        namespace = parse.parse_args(sys.argv[1:])
+        print(f"City: {namespace.city}")
+        url_geo = f"http://api.openweathermap.org/geo/1.0/direct?q={namespace.city}&limit=1&appid={api}"
+        result = []
+        response_geo = requests.get(url=url_geo)
+        response_geo.raise_for_status()
+        lat, lon = response_geo.json()[0]["lat"], response_geo.json()[0]["lon"]
+        url_weather = f"https://api.openweathermap.org/data/3.0/onecall?lat={lat}&lon={lon}&exclude=daily,hourly,minutely&appid={api}"
+        response_weather = requests.get(url=url_weather, params={"units": "metric", "lang": "ru"})
+        current = response_weather.json()["current"]
+
+        for i, key in enumerate(current):
+            if key == "dt":
+                result.append(f"date time: {datetime.fromtimestamp(current.get(key))}")
+                continue
+            if i < 3:
+                result.append(f"{key}: {datetime.fromtimestamp(current.get(key))}")
+                continue
+            if key == "weather":
+                result.append(f"Описание: {current["weather"][0]["description"]}")
+                continue
+            result.append(f"{key}: {current.get(key)}")
+
+        print("\n".join(result))
 except requests.exceptions.RequestException as err:
     print(f"Response error {err}")
-except KeyError as er:
-    print(f"Key error {er}")
